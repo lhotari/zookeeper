@@ -27,11 +27,15 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.io.ByteArrayOutputStream;
 import java.io.LineNumberReader;
 import java.io.StringReader;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NotReadOnlyException;
+import org.apache.zookeeper.Op;
+import org.apache.zookeeper.OpResult;
 import org.apache.zookeeper.Transaction;
 import org.apache.zookeeper.ZKTestCase;
 import org.apache.zookeeper.ZooDefs;
@@ -92,6 +96,11 @@ public class ReadOnlyModeTest extends ZKTestCase {
         // read operation during r/o mode
         String remoteData = new String(zk.getData(node1, false, null));
         assertEquals(data, remoteData, "Failed to read data in r-o mode");
+
+        Op op = Op.getData(node1);
+        List<OpResult> results = zk.multi(Collections.singletonList(op));
+        OpResult.GetDataResult opResult = (OpResult.GetDataResult) results.get(0);
+        assertEquals(data, new String(opResult.getData()), "Failed to read data in r-o mode in multi mode");
 
         try {
             Transaction transaction = zk.transaction();
